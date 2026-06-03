@@ -16,6 +16,7 @@
 
 # local node bootstrap (optional)
 node-v*-darwin-*/
+node-v*.tar.gz
 
 # misc
 .DS_Store
