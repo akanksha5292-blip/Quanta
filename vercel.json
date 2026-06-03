@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/pipeline",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/publish",
+      "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/cron/reminders",
+      "schedule": "5 * * * *"
+    }
+  ]
+}
