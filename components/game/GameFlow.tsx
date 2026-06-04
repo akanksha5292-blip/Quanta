@@ -48,7 +48,11 @@ export function GameFlow() {
       }
       if (res.status === 404) {
         const j = (await res.json()) as { message?: string };
-        setErrorMsg(j.message ?? "Game not published yet, check back soon");
+        setErrorMsg(
+          process.env.NODE_ENV === "development"
+            ? "No puzzle for today yet. Go to the homepage and click “Seed today’s game”, then try Play again."
+            : (j.message ?? "Game not published yet, check back soon"),
+        );
         setLoadState("error");
         return;
       }

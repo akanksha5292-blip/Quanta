@@ -14,7 +14,7 @@ export function DevSeedPanel() {
       const res = await fetch("/api/dev/seed", { method: "POST" });
       const json = (await res.json()) as { ok?: boolean; date?: string; error?: string };
       if (!res.ok) {
-        setMsg(json.error ?? "Seed failed — check Supabase env vars");
+        setMsg(json.error ?? `Seed failed (${res.status}) — check Supabase env vars`);
       } else {
         setMsg(`Seeded daily set for ${json.date}. Go to Play.`);
       }

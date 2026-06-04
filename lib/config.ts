@@ -3,7 +3,10 @@ export function isClerkConfigured(): boolean {
   return Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim());
 }
 
-/** Server/middleware — requires secret for auth to work. */
+/**
+ * Server/middleware only — requires secret key (not available in the browser).
+ * Do not use in Client Components; use isClerkConfigured() for UI.
+ */
 export function isClerkFullyConfigured(): boolean {
   return Boolean(
     isClerkConfigured() && process.env.CLERK_SECRET_KEY?.trim(),

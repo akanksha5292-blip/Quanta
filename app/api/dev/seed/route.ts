@@ -10,10 +10,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not available in production" }, { status: 403 });
   }
 
-  const secret = process.env.DEV_SEED_SECRET ?? process.env.CRON_SECRET;
-  if (secret) {
+  // Only DEV_SEED_SECRET gates the browser button — do not reuse CRON_SECRET (breaks local seed).
+  const devSecret = process.env.DEV_SEED_SECRET?.trim();
+  if (devSecret) {
     const auth = request.headers.get("authorization");
-    if (auth !== `Bearer ${secret}`) {
+    if (auth !== `Bearer ${devSecret}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
   }

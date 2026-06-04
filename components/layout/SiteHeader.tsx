@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/nextjs";
-import { isClerkFullyConfigured } from "@/lib/config";
+import { isClerkConfigured } from "@/lib/config";
+import { useMounted } from "@/hooks/useMounted";
 
 const links = [
   { href: "/play", label: "Play" },
@@ -13,7 +14,8 @@ const links = [
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const clerk = isClerkFullyConfigured();
+  const mounted = useMounted();
+  const clerk = isClerkConfigured();
 
   if (pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up")) {
     return null;
@@ -31,7 +33,9 @@ export function SiteHeader() {
               {l.label}
             </Link>
           ))}
-          {clerk ? (
+          {!clerk || !mounted ? (
+            <span className="inline-block h-8 w-8" aria-hidden />
+          ) : (
             <>
               <SignedOut>
                 <SignInButton mode="modal">
@@ -44,10 +48,6 @@ export function SiteHeader() {
                 <UserButton appearance={{ variables: { colorPrimary: "#F5C842" } }} />
               </SignedIn>
             </>
-          ) : (
-            <Link href="/sign-in" className="text-[#F5C842] hover:underline">
-              Sign in
-            </Link>
           )}
         </nav>
       </div>

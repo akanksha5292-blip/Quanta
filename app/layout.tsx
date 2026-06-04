@@ -30,25 +30,25 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const shell = (
-    <html lang="en" className="dark">
-      <body className={inter.className}>
-        <AppProviders>
-          {isClerkFullyConfigured() ? <SiteHeader /> : <SiteHeaderPlain />}
-          {children}
-        </AppProviders>
-      </body>
-    </html>
+  const inner = (
+    <AppProviders>
+      {isClerkFullyConfigured() ? <SiteHeader /> : <SiteHeaderPlain />}
+      {children}
+    </AppProviders>
   );
 
-  if (!isClerkFullyConfigured()) {
-    return shell;
-  }
-
   return (
-    <ClerkProvider>
-      <OneSignalUserLinker />
-      {shell}
-    </ClerkProvider>
+    <html lang="en" className="dark">
+      <body className={inter.className}>
+        {isClerkFullyConfigured() ? (
+          <ClerkProvider>
+            <OneSignalUserLinker />
+            {inner}
+          </ClerkProvider>
+        ) : (
+          inner
+        )}
+      </body>
+    </html>
   );
 }
