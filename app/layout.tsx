@@ -25,6 +25,9 @@ export const viewport: Viewport = {
   themeColor: "#F5C842",
 };
 
+/** Avoid static prerender with Clerk during `next build` (fixes Vercel when keys load at runtime). */
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: Readonly<{

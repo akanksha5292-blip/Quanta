@@ -1,6 +1,7 @@
 /** Safe in Client Components — publishable key only. */
 export function isClerkConfigured(): boolean {
-  return Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim());
+  const key = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.trim();
+  return Boolean(key && /^pk_(test|live)_/.test(key));
 }
 
 /**
