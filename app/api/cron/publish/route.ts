@@ -3,7 +3,8 @@ import { verifyCronRequest } from "@/lib/cron-auth";
 import { fetchPublishedQuestions, getNotion, type NotionQuestionRow } from "@/lib/notion";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getRedis } from "@/lib/redis";
-import { addIstCalendarDays } from "@/lib/ist";
+import { addIstCalendarDays, formatIstDate } from "@/lib/ist";
+import { isRedisConfigured } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -141,7 +142,15 @@ export async function GET(request: Request) {
   const denied = verifyCronRequest(request);
   if (denied) return denied;
 
-  const tomorrow = addIstCalendarDays(1);
+  const { searchParams } = new URL(request.url);
+  const dateParam = searchParams.get("date");
+  const targetDate =
+    dateParam === "today"
+      ? formatIstDate()
+      : dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
+        ? dateParam
+        : addIstCalendarDays(1);
+
   const published = await fetchPublishedQuestions();
   const selected = await selectSeven(published);
   const upserted = await upsertQuestionsFromNotion(selected);
@@ -160,22 +169,25 @@ export async function GET(request: Request) {
   const judgmentId = findId("judgment");
 
   const supabase = createServiceRoleClient();
-  const { error: dsError } = await supabase.from("daily_sets").insert({
-    date: tomorrow,
+  const { error: dsError } = await supabase.from("daily_sets").upsert(
+    {
+    date: targetDate,
     guesstimate_id: guesstimateId,
     warmup_id: warmupId,
     gk_ids: gkIds,
     wordplay_id: wordplayId,
     judgment_id: judgmentId,
     published_at: new Date().toISOString(),
-  });
+    },
+    { onConflict: "date" },
+  );
 
-  if (dsError && dsError.code !== "23505") {
+  if (dsError) {
     return NextResponse.json({ error: dsError.message }, { status: 500 });
   }
 
   const ids = upserted.map((q) => q.id as string);
-  await supabase.from("questions").update({ used_on: tomorrow }).in("id", ids);
+  await supabase.from("questions").update({ used_on: targetDate }).in("id", ids);
 
   for (const row of selected) {
     try {
@@ -190,9 +202,10 @@ export async function GET(request: Request) {
     }
   }
 
-  const compiled = { date: tomorrow, questions: upserted };
-  const redis = getRedis();
-  await redis.set(`daily_set:${tomorrow}`, JSON.stringify(compiled), { ex: 60 * 60 * 48 });
+  if (isRedisConfigured()) {
+    const compiled = { date: targetDate, questions: upserted };
+    await getRedis().set(`daily_set:${targetDate}`, JSON.stringify(compiled), { ex: 60 * 60 * 48 });
+  }
 
   const publishedCount = published.length;
   if (publishedCount < 14 && process.env.SLACK_WEBHOOK_URL) {
@@ -205,5 +218,5 @@ export async function GET(request: Request) {
     });
   }
 
-  return NextResponse.json({ ok: true, date: tomorrow, questionIds: ids });
+  return NextResponse.json({ ok: true, date: targetDate, questionIds: ids });
 }
